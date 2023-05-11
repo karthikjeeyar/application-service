@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Red Hat, Inc.
+Copyright 2021-2023 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"net/url"
 
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
-	"github.com/redhat-appstudio/application-service/gitops"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	devfile "github.com/redhat-appstudio/application-service/pkg/devfile"
+	github "github.com/redhat-appstudio/application-service/pkg/github"
+	"github.com/redhat-appstudio/application-service/pkg/util"
 	"github.com/redhat-appstudio/application-service/pkg/util/ioutils"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/yaml"
@@ -39,9 +39,12 @@ func (r *ComponentReconciler) AddFinalizer(ctx context.Context, component *appst
 
 // Finalize deletes the corresponding devfile project or the devfile attribute entry from the Application CR and also deletes the corresponding GitOps repo's Component dir
 // & updates the parent kustomize for the given Component CR.
-func (r *ComponentReconciler) Finalize(ctx context.Context, component *appstudiov1alpha1.Component, application *appstudiov1alpha1.Application) error {
+func (r *ComponentReconciler) Finalize(ctx context.Context, component *appstudiov1alpha1.Component, application *appstudiov1alpha1.Application, ghClient *github.GitHubClient) error {
 	// Get the Application CR devfile
-	devfileObj, err := devfile.ParseDevfileModel(application.Status.Devfile)
+	devfileSrc := devfile.DevfileSrc{
+		Data: application.Status.Devfile,
+	}
+	devfileObj, err := devfile.ParseDevfile(devfileSrc)
 	if err != nil {
 		return err
 	}
@@ -69,33 +72,10 @@ func (r *ComponentReconciler) Finalize(ctx context.Context, component *appstudio
 
 	application.Status.Devfile = string(yamldevfileObj)
 
-	gitopsStatus := component.Status.GitOps
-
-	// Get the information about the gitops repository from the Component resource
-	var gitOpsURL, gitOpsBranch, gitOpsContext string
-	gitOpsURL = gitopsStatus.RepositoryURL
-	if gitOpsURL == "" {
-		err := fmt.Errorf("did not find any gitOps URL for the component during clean up")
-		return err
-	}
-	if gitopsStatus.Branch != "" {
-		gitOpsBranch = gitopsStatus.Branch
-	} else {
-		gitOpsBranch = "main"
-	}
-	if gitopsStatus.Context != "" {
-		gitOpsContext = gitopsStatus.Context
-	} else {
-		gitOpsContext = "/"
-	}
-
-	// Construct the remote URL for the gitops repository
-	parsedURL, err := url.Parse(gitOpsURL)
+	gitOpsURL, gitOpsBranch, gitOpsContext, err := util.ProcessGitOpsStatus(component.Status.GitOps, ghClient.Token)
 	if err != nil {
 		return err
 	}
-	parsedURL.User = url.User(r.GitToken)
-	remoteURL := parsedURL.String()
 
 	// Create a temp folder to create the gitops resources in
 	tempDir, err := ioutils.CreateTempPath(component.Name, r.AppFS)
@@ -103,7 +83,8 @@ func (r *ComponentReconciler) Finalize(ctx context.Context, component *appstudio
 		return fmt.Errorf("unable to create temp directory for gitops resources due to error: %v", err)
 	}
 
-	err = gitops.RemoveAndPush(tempDir, remoteURL, *component, r.Executor, r.AppFS, gitOpsBranch, gitOpsContext)
+	//Gitops functions return sanitized error messages
+	err = r.Generator.GitRemoveComponent(tempDir, gitOpsURL, component.Name, gitOpsBranch, gitOpsContext)
 	if err != nil {
 		return err
 	}

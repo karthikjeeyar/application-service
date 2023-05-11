@@ -65,10 +65,6 @@ spec:
                 required:
                 - url
                 type: object
-              isMultiComponent:
-                description: IsMultiComponent specifies if the component specified
-                  has multiple services
-                type: boolean
               secret:
                 description: Secret describes the name of a Kubernetes secret containing
                   a Personal Access Token to access the git repostiory
@@ -219,12 +215,6 @@ spec:
                             - name
                             type: object
                           type: array
-                        releaseStrategies:
-                          description: List of references to ReleaseStrategies to
-                            use when releasing the component
-                          items:
-                            type: string
-                          type: array
                         replicas:
                           description: The number of replicas to deploy the component
                             with
@@ -266,6 +256,10 @@ spec:
                             component) or 2. An Image Pull Secret to access the Component''s
                             container image (if using an Image-source component).'
                           type: string
+                        skipGitOpsResourceGeneration:
+                          description: Whether or not to bypass the generation of
+                            GitOps resources for the Component. Defaults to false.
+                          type: boolean
                         source:
                           description: Source describes the Component source
                           properties:

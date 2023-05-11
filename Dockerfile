@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.17 as builder
+FROM golang:1.18 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -12,17 +12,16 @@ RUN go mod download
 # Copy the go source
 COPY main.go main.go
 # ToDo: Uncomment once API added
-COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg pkg/
 COPY gitops gitops/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o manager main.go
 
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6-751
-RUN microdnf update -y && microdnf install git
+RUN microdnf update --setopt=install_weak_deps=0 -y && microdnf install git
 
 ARG ENABLE_WEBHOOKS=true
 ENV ENABLE_WEBHOOKS=${ENABLE_WEBHOOKS}

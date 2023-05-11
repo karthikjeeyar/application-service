@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Red Hat, Inc.
+Copyright 2021-2023 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	devfile "github.com/redhat-appstudio/application-service/pkg/devfile"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,7 +82,10 @@ var _ = Describe("Application controller", func() {
 			// Make sure the devfile model was properly set
 			Expect(createdHasApp.Status.Devfile).Should(Not(Equal("")))
 
-			devfile, err := devfile.ParseDevfileModel(createdHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: createdHasApp.Status.Devfile,
+			}
+			devfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).Should(Not(HaveOccurred()))
 
 			// gitOpsRepo and appModelRepo should both be set
@@ -127,7 +130,10 @@ var _ = Describe("Application controller", func() {
 			// Make sure the devfile model was properly set
 			Expect(createdHasApp.Status.Devfile).Should(Not(Equal("")))
 
-			devfile, err := devfile.ParseDevfileModel(createdHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: createdHasApp.Status.Devfile,
+			}
+			devfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).Should(Not(HaveOccurred()))
 
 			// gitOpsRepo and appModelRepo should both be set
@@ -177,7 +183,10 @@ var _ = Describe("Application controller", func() {
 			// Make sure the devfile model was properly set
 			Expect(createdHasApp.Status.Devfile).Should(Not(Equal("")))
 
-			devfile, err := devfile.ParseDevfileModel(createdHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: createdHasApp.Status.Devfile,
+			}
+			devfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).Should(Not(HaveOccurred()))
 
 			// gitOpsRepo and appModelRepo should both be set
@@ -229,7 +238,10 @@ var _ = Describe("Application controller", func() {
 			// Make sure the devfile model was properly set
 			Expect(createdHasApp.Status.Devfile).Should(Not(Equal("")))
 
-			devfile, err := devfile.ParseDevfileModel(createdHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: createdHasApp.Status.Devfile,
+			}
+			devfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).Should(Not(HaveOccurred()))
 
 			// gitOpsRepo and appModelRepo should both be set
@@ -292,7 +304,10 @@ var _ = Describe("Application controller", func() {
 				return fetchedHasApp.Status.Conditions[len(fetchedHasApp.Status.Conditions)-1].Type == "Updated"
 			}, timeout, interval).Should(BeTrue())
 
-			devfile, err := devfile.ParseDevfileModel(fetchedHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: fetchedHasApp.Status.Devfile,
+			}
+			devfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).Should(Not(HaveOccurred()))
 			Expect(string(devfile.GetMetadata().Name)).Should(Equal("newname"))
 			Expect(string(devfile.GetMetadata().Description)).Should(Equal("New Description"))
@@ -306,7 +321,7 @@ var _ = Describe("Application controller", func() {
 		It("Should update successfully with updated description", func() {
 			ctx := context.Background()
 
-			applicationName := HASAppName + "5"
+			applicationName := "test-error-response" + "5"
 
 			hasApp := &appstudiov1alpha1.Application{
 				TypeMeta: metav1.TypeMeta{

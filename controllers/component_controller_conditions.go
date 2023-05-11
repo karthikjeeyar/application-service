@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Red Hat, Inc.
+Copyright 2021-2023 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,56 +22,142 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
+	logutil "github.com/redhat-appstudio/application-service/pkg/log"
 )
 
-func (r *ComponentReconciler) SetCreateConditionAndUpdateCR(ctx context.Context, component *appstudiov1alpha1.Component, createError error) {
-	log := r.Log.WithValues("Component", component.Name)
+func (r *ComponentReconciler) SetCreateConditionAndUpdateCR(ctx context.Context, req ctrl.Request, component *appstudiov1alpha1.Component, createError error) error {
+	log := ctrl.LoggerFrom(ctx)
 
+	condition := metav1.Condition{}
 	if createError == nil {
-		meta.SetStatusCondition(&component.Status.Conditions, metav1.Condition{
+		condition = metav1.Condition{
 			Type:    "Created",
 			Status:  metav1.ConditionTrue,
 			Reason:  "OK",
 			Message: "Component has been successfully created",
-		})
+		}
 	} else {
-		meta.SetStatusCondition(&component.Status.Conditions, metav1.Condition{
+		condition = metav1.Condition{
 			Type:    "Created",
 			Status:  metav1.ConditionFalse,
 			Reason:  "Error",
 			Message: fmt.Sprintf("Component create failed: %v", createError),
-		})
+		}
+		logutil.LogAPIResourceChangeEvent(log, component.Name, "Component", logutil.ResourceCreate, createError)
 	}
+	meta.SetStatusCondition(&component.Status.Conditions, condition)
 
 	err := r.Client.Status().Update(ctx, component)
 	if err != nil {
-		log.Error(err, "Unable to update Component")
+		// Retry, and if still fails, then return an error
+		curComponent := &appstudiov1alpha1.Component{}
+		err := r.Client.Get(ctx, req.NamespacedName, curComponent)
+		if err != nil {
+			return err
+		}
+
+		curComponent.Status.Devfile = component.Status.Devfile
+		curComponent.Status.ContainerImage = component.Status.ContainerImage
+		curComponent.Status.GitOps = component.Status.GitOps
+		meta.SetStatusCondition(&curComponent.Status.Conditions, condition)
+
+		err = r.Client.Status().Update(ctx, curComponent)
+		if err != nil {
+			log.Error(err, "Unable to update Component")
+		}
+
+		return err
 	}
+	return nil
 }
 
-func (r *ComponentReconciler) SetUpdateConditionAndUpdateCR(ctx context.Context, component *appstudiov1alpha1.Component, updateError error) {
-	log := r.Log.WithValues("Component", component.Name)
+func (r *ComponentReconciler) SetUpdateConditionAndUpdateCR(ctx context.Context, req ctrl.Request, component *appstudiov1alpha1.Component, updateError error) error {
+	log := ctrl.LoggerFrom(ctx)
 
+	condition := metav1.Condition{}
 	if updateError == nil {
-		meta.SetStatusCondition(&component.Status.Conditions, metav1.Condition{
+		condition = metav1.Condition{
 			Type:    "Updated",
 			Status:  metav1.ConditionTrue,
 			Reason:  "OK",
 			Message: "Component has been successfully updated",
-		})
+		}
 	} else {
-		meta.SetStatusCondition(&component.Status.Conditions, metav1.Condition{
+		condition = metav1.Condition{
 			Type:    "Updated",
 			Status:  metav1.ConditionFalse,
 			Reason:  "Error",
 			Message: fmt.Sprintf("Component updated failed: %v", updateError),
-		})
+		}
+		logutil.LogAPIResourceChangeEvent(log, component.Name, "Component", logutil.ResourceUpdate, updateError)
 	}
+
+	meta.SetStatusCondition(&component.Status.Conditions, condition)
+	err := r.Client.Status().Update(ctx, component)
+	if err != nil {
+		// Retry, and if still fails, then return an error
+		curComponent := &appstudiov1alpha1.Component{}
+		err := r.Client.Get(ctx, req.NamespacedName, curComponent)
+		if err != nil {
+			return err
+		}
+
+		curComponent.Status.Devfile = component.Status.Devfile
+		curComponent.Status.ContainerImage = component.Status.ContainerImage
+		curComponent.Status.GitOps = component.Status.GitOps
+		meta.SetStatusCondition(&curComponent.Status.Conditions, condition)
+
+		err = r.Client.Status().Update(ctx, curComponent)
+		if err != nil {
+			log.Error(err, "Unable to update Component")
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *ComponentReconciler) SetGitOpsGeneratedConditionAndUpdateCR(ctx context.Context, req ctrl.Request, component *appstudiov1alpha1.Component, generateError error) error {
+	log := ctrl.LoggerFrom(ctx)
+	condition := metav1.Condition{}
+	if generateError == nil {
+		condition = metav1.Condition{
+			Type:    "GitOpsResourcesGenerated",
+			Status:  metav1.ConditionTrue,
+			Reason:  "OK",
+			Message: "GitOps resource generated successfully",
+		}
+	} else {
+		condition = metav1.Condition{
+			Type:    "GitOpsResourcesGenerated",
+			Status:  metav1.ConditionFalse,
+			Reason:  "GenerateError",
+			Message: fmt.Sprintf("GitOps resources failed to generate: %v", generateError),
+		}
+		logutil.LogAPIResourceChangeEvent(log, component.Name, "ComponentGitOpsResources", logutil.ResourceCreate, generateError)
+	}
+	meta.SetStatusCondition(&component.Status.Conditions, condition)
 
 	err := r.Client.Status().Update(ctx, component)
 	if err != nil {
-		log.Error(err, "Unable to update Component")
+		// Retry, and if still fails, then return an error
+		curComponent := &appstudiov1alpha1.Component{}
+		err := r.Client.Get(ctx, req.NamespacedName, curComponent)
+		if err != nil {
+			return err
+		}
+		meta.SetStatusCondition(&curComponent.Status.Conditions, condition)
+
+		err = r.Client.Status().Update(ctx, curComponent)
+		if err != nil {
+			log.Error(err, "Unable to update Component")
+		}
+
+		return err
 	}
+	return nil
 }

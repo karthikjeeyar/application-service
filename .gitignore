@@ -8,3 +8,7 @@ tmp
 
 .idea/
 .vscode/
+.tmp/
+output.log
+syncer.yaml
+.DS_Store

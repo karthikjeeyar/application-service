@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import (
 	"github.com/devfile/registry-support/index/generator/schema"
 	registryLibrary "github.com/devfile/registry-support/registry-library/library"
 	"github.com/redhat-appstudio/application-service/pkg/util"
-	"github.com/redhat-developer/alizer/go/pkg/apis/recognizer"
+	"github.com/redhat-developer/alizer/go/pkg/apis/model"
 )
 
 // getAlizerDevfileTypes gets the Alizer devfile types for a specified registry
-func getAlizerDevfileTypes(registryURL string) ([]recognizer.DevFileType, error) {
-	types := []recognizer.DevFileType{}
+func getAlizerDevfileTypes(registryURL string) ([]model.DevFileType, error) {
+	types := []model.DevFileType{}
 	registryIndex, err := registryLibrary.GetRegistryIndex(registryURL, registryLibrary.RegistryOptions{
 		Telemetry: registryLibrary.TelemetryData{},
 	}, schema.SampleDevfileType)
@@ -38,7 +38,7 @@ func getAlizerDevfileTypes(registryURL string) ([]recognizer.DevFileType, error)
 	}
 
 	for _, index := range registryIndex {
-		types = append(types, recognizer.DevFileType{
+		types = append(types, model.DevFileType{
 			Name:        index.Name,
 			Language:    index.Language,
 			ProjectType: index.ProjectType,
@@ -79,22 +79,20 @@ func getContext(localpath string, currentLevel int) string {
 	return context
 }
 
-func UpdateDockerfileLink(repo, revision, context string) (string, error) {
-
-	link := context
-
+// UpdateGitLink updates the relative uri
+// to a full URL link with the context & revision
+func UpdateGitLink(repo, revision, context string) (string, error) {
+	var rawGitURL string
+	var err error
 	if !strings.HasPrefix(context, "http") {
-		rawGitURL, err := util.ConvertGitHubURL(repo, revision)
+		rawGitURL, err = util.ConvertGitHubURL(repo, revision, context)
 		if err != nil {
 			return "", err
 		}
 
-		if !strings.HasSuffix(rawGitURL, "/") {
-			rawGitURL = rawGitURL + "/"
-		}
-
-		link = rawGitURL + link
+	} else {
+		return context, nil
 	}
 
-	return link, nil
+	return rawGitURL, nil
 }

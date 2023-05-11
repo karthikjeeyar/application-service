@@ -1,5 +1,5 @@
 //
-// Copyright 2021 Red Hat, Inc.
+// Copyright 2021-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,18 +16,23 @@
 package controllers
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	devfileAPIV1 "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
 	"github.com/devfile/api/v2/pkg/attributes"
 	"github.com/devfile/api/v2/pkg/devfile"
-	v2 "github.com/devfile/library/pkg/devfile/parser/data/v2"
-	"github.com/devfile/library/pkg/devfile/parser/data/v2/common"
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	v2 "github.com/devfile/library/v2/pkg/devfile/parser/data/v2"
+	"github.com/devfile/library/v2/pkg/devfile/parser/data/v2/common"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
+	devfilePkg "github.com/redhat-appstudio/application-service/pkg/devfile"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 )
@@ -229,7 +234,7 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 		},
 	}
 
-	envAttributes := attributes.Attributes{}.FromMap(map[string]interface{}{containerENVKey: []corev1.EnvVar{{Name: "FOO", Value: "foo"}}}, &err)
+	envAttributes := attributes.Attributes{}.FromMap(map[string]interface{}{devfilePkg.ContainerENVKey: []corev1.EnvVar{{Name: "FOO", Value: "foo"}}}, &err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -273,7 +278,7 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 			components: []devfileAPIV1.Component{
 				{
 					Name:       "component1",
-					Attributes: envAttributes.PutInteger(containerImagePortKey, 1001),
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 1001),
 					ComponentUnion: devfileAPIV1.ComponentUnion{
 						Kubernetes: &devfileAPIV1.KubernetesComponent{},
 					},
@@ -304,14 +309,14 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 			components: []devfileAPIV1.Component{
 				{
 					Name:       "component1",
-					Attributes: envAttributes.PutInteger(containerImagePortKey, 1001),
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 1001),
 					ComponentUnion: devfileAPIV1.ComponentUnion{
 						Kubernetes: &devfileAPIV1.KubernetesComponent{},
 					},
 				},
 				{
 					Name:       "component2",
-					Attributes: envAttributes.PutInteger(containerImagePortKey, 3333).PutString(memoryLimitKey, "2Gi"),
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 3333).PutString(devfilePkg.MemoryLimitKey, "2Gi"),
 					ComponentUnion: devfileAPIV1.ComponentUnion{
 						Kubernetes: &devfileAPIV1.KubernetesComponent{},
 					},
@@ -396,6 +401,106 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "image component with local Dockerfile uri updated to component's absolute DockerfileURL",
+			components: []devfileAPIV1.Component{
+				{
+					Name:       "component1",
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 1001),
+					ComponentUnion: devfileAPIV1.ComponentUnion{
+						Kubernetes: &devfileAPIV1.KubernetesComponent{},
+					},
+				},
+				{
+					Name:       "component2",
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 3333).PutString(devfilePkg.MemoryLimitKey, "2Gi"),
+					ComponentUnion: devfileAPIV1.ComponentUnion{
+						Image: &devfileAPIV1.ImageComponent{
+
+							Image: devfileAPIV1.Image{
+								ImageUnion: devfileAPIV1.ImageUnion{
+									Dockerfile: &devfileAPIV1.DockerfileImage{
+										DockerfileSrc: devfileAPIV1.DockerfileSrc{
+											Uri: "./dockerfile",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			component: appstudiov1alpha1.Component{
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "componentName",
+					Application:   "applicationName",
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{
+							GitSource: &appstudiov1alpha1.GitSource{
+								URL:           "url",
+								DockerfileURL: "https://website.com/dockerfiles/dockerfile",
+							},
+						},
+					},
+					Route:      "route1",
+					Replicas:   1,
+					TargetPort: 1111,
+					Env:        env,
+					Resources:  originalResources,
+				},
+			},
+			updateExpected: true,
+		},
+		{
+			name: "devfile with invalid components, error out when trying to update devfile's Dockerfile uri",
+			components: []devfileAPIV1.Component{
+				{
+					Name:       "component1",
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 1001),
+					ComponentUnion: devfileAPIV1.ComponentUnion{
+						ComponentType: "bad-component",
+					},
+				},
+				{
+					Name:       "component2",
+					Attributes: envAttributes.PutInteger(devfilePkg.ContainerImagePortKey, 3333).PutString(devfilePkg.MemoryLimitKey, "2Gi"),
+					ComponentUnion: devfileAPIV1.ComponentUnion{
+						Image: &devfileAPIV1.ImageComponent{
+
+							Image: devfileAPIV1.Image{
+								ImageUnion: devfileAPIV1.ImageUnion{
+									Dockerfile: &devfileAPIV1.DockerfileImage{
+										DockerfileSrc: devfileAPIV1.DockerfileSrc{
+											Uri: "./dockerfile",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			component: appstudiov1alpha1.Component{
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "componentName",
+					Application:   "applicationName",
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{
+							GitSource: &appstudiov1alpha1.GitSource{
+								URL:           "url",
+								DockerfileURL: "https://website.com/dockerfiles/dockerfile",
+							},
+						},
+					},
+					Route:      "route1",
+					Replicas:   1,
+					TargetPort: 1111,
+					Env:        env,
+					Resources:  originalResources,
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -416,7 +521,7 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 			r := ComponentReconciler{
 				Log: ctrl.Log.WithName("TestUpdateComponentDevfileModel"),
 			}
-			err := r.updateComponentDevfileModel(devfileData, tt.component)
+			err := r.updateComponentDevfileModel(ctrl.Request{}, devfileData, tt.component)
 			if tt.wantErr && (err == nil) {
 				t.Error("wanted error but got nil")
 			} else if !tt.wantErr && err != nil {
@@ -441,7 +546,7 @@ func TestUpdateComponentDevfileModel(t *testing.T) {
 
 func TestUpdateComponentStub(t *testing.T) {
 	var err error
-	envAttributes := attributes.Attributes{}.FromMap(map[string]interface{}{containerENVKey: []corev1.EnvVar{{Name: "name1", Value: "value1"}}}, &err)
+	envAttributes := attributes.Attributes{}.FromMap(map[string]interface{}{devfilePkg.ContainerENVKey: []corev1.EnvVar{{Name: "name1", Value: "value1"}}}, &err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -449,15 +554,15 @@ func TestUpdateComponentStub(t *testing.T) {
 	componentsValid := []devfileAPIV1.Component{
 		{
 			Name: "component1",
-			Attributes: envAttributes.PutInteger(replicaKey, 1).PutString(routeKey, "route1").PutInteger(
-				containerImagePortKey, 1001).PutString(cpuLimitKey, "2").PutString(cpuRequestKey, "700m").PutString(
-				memoryLimitKey, "500Mi").PutString(memoryRequestKey, "400Mi").PutString(
-				storageLimitKey, "400Mi").PutString(storageRequestKey, "200Mi"),
+			Attributes: envAttributes.PutInteger(devfilePkg.ReplicaKey, 1).PutString(devfilePkg.RouteKey, "route1").PutInteger(
+				devfilePkg.ContainerImagePortKey, 1001).PutString(devfilePkg.CpuLimitKey, "2").PutString(devfilePkg.CpuRequestKey, "700m").PutString(
+				devfilePkg.MemoryLimitKey, "500Mi").PutString(devfilePkg.MemoryRequestKey, "400Mi").PutString(
+				devfilePkg.StorageLimitKey, "400Mi").PutString(devfilePkg.StorageRequestKey, "200Mi"),
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{
 					K8sLikeComponent: devfileAPIV1.K8sLikeComponent{
 						K8sLikeComponentLocation: devfileAPIV1.K8sLikeComponentLocation{
-							Uri: "testLocation",
+							Uri: "https://raw.githubusercontent.com/yangcao77/devfile-sample-java-springboot-basic/main/deploy.yaml",
 						},
 					},
 				},
@@ -465,12 +570,50 @@ func TestUpdateComponentStub(t *testing.T) {
 		},
 		{
 			Name:       "component2",
-			Attributes: attributes.Attributes{}.PutInteger(containerImagePortKey, 1003),
+			Attributes: attributes.Attributes{}.PutInteger(devfilePkg.ContainerImagePortKey, 1003),
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{
 					K8sLikeComponent: devfileAPIV1.K8sLikeComponent{
 						K8sLikeComponentLocation: devfileAPIV1.K8sLikeComponentLocation{
-							Uri: "testLocation",
+							Uri: "https://raw.githubusercontent.com/yangcao77/devfile-sample-java-springboot-basic/main/deploy.yaml",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	componentsInvalidDeployYamlErr := []devfileAPIV1.Component{
+		{
+			Name: "component1",
+			Attributes: envAttributes.PutInteger(devfilePkg.ReplicaKey, 1).PutString(devfilePkg.RouteKey, "route1").PutInteger(
+				devfilePkg.ContainerImagePortKey, 1001).PutString(devfilePkg.CpuLimitKey, "2").PutString(devfilePkg.CpuRequestKey, "700m").PutString(
+				devfilePkg.MemoryLimitKey, "500Mi").PutString(devfilePkg.MemoryRequestKey, "400Mi").PutString(
+				devfilePkg.StorageLimitKey, "400Mi").PutString(devfilePkg.StorageRequestKey, "200Mi"),
+			ComponentUnion: devfileAPIV1.ComponentUnion{
+				Kubernetes: &devfileAPIV1.KubernetesComponent{
+					K8sLikeComponent: devfileAPIV1.K8sLikeComponent{
+						K8sLikeComponentLocation: devfileAPIV1.K8sLikeComponentLocation{
+							Uri: "testLocation/deploy.yaml",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	componentsValidWithPort := []devfileAPIV1.Component{
+		{
+			Name: "component1",
+			Attributes: envAttributes.PutInteger(devfilePkg.ReplicaKey, 1).PutString(devfilePkg.RouteKey, "route1").PutInteger(
+				devfilePkg.ContainerImagePortKey, 8080).PutString(devfilePkg.CpuLimitKey, "2").PutString(devfilePkg.CpuRequestKey, "700m").PutString(
+				devfilePkg.MemoryLimitKey, "500Mi").PutString(devfilePkg.MemoryRequestKey, "400Mi").PutString(
+				devfilePkg.StorageLimitKey, "400Mi").PutString(devfilePkg.StorageRequestKey, "200Mi"),
+			ComponentUnion: devfileAPIV1.ComponentUnion{
+				Kubernetes: &devfileAPIV1.KubernetesComponent{
+					K8sLikeComponent: devfileAPIV1.K8sLikeComponent{
+						K8sLikeComponentLocation: devfileAPIV1.K8sLikeComponentLocation{
+							Uri: "https://raw.githubusercontent.com/yangcao77/devfile-sample-java-springboot-basic/main/deploy.yaml",
 						},
 					},
 				},
@@ -484,7 +627,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutBoolean(replicaKey, true),
+			Attributes: attributes.Attributes{}.PutBoolean(devfilePkg.ReplicaKey, true),
 		},
 	}
 
@@ -494,7 +637,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutBoolean(containerImagePortKey, true),
+			Attributes: attributes.Attributes{}.PutBoolean(devfilePkg.ContainerImagePortKey, true),
 		},
 	}
 
@@ -504,7 +647,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(routeKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.RouteKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -518,7 +661,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(storageLimitKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.StorageLimitKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -532,7 +675,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(storageRequestKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.StorageRequestKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -546,7 +689,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(cpuLimitKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.CpuLimitKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -560,7 +703,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(cpuRequestKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.CpuRequestKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -574,7 +717,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(memoryLimitKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.MemoryLimitKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -588,7 +731,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.Put(memoryRequestKey, []string{"a", "b"}, &err),
+			Attributes: attributes.Attributes{}.Put(devfilePkg.MemoryRequestKey, []string{"a", "b"}, &err),
 		},
 	}
 	if err != nil {
@@ -602,7 +745,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(cpuLimitKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.CpuLimitKey, "xyz"),
 		},
 	}
 
@@ -612,7 +755,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(memoryLimitKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.MemoryLimitKey, "xyz"),
 		},
 	}
 
@@ -622,7 +765,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(storageLimitKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.StorageLimitKey, "xyz"),
 		},
 	}
 
@@ -632,7 +775,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(cpuRequestKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.CpuRequestKey, "xyz"),
 		},
 	}
 
@@ -642,7 +785,7 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(memoryRequestKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.MemoryRequestKey, "xyz"),
 		},
 	}
 
@@ -652,17 +795,18 @@ func TestUpdateComponentStub(t *testing.T) {
 			ComponentUnion: devfileAPIV1.ComponentUnion{
 				Kubernetes: &devfileAPIV1.KubernetesComponent{},
 			},
-			Attributes: attributes.Attributes{}.PutString(storageRequestKey, "xyz"),
+			Attributes: attributes.Attributes{}.PutString(devfilePkg.StorageRequestKey, "xyz"),
 		},
 	}
 
 	tests := []struct {
-		name             string
-		devfilesDataMap  map[string]*v2.DevfileV2
-		devfilesURLMap   map[string]string
-		dockerfileURLMap map[string]string
-		isNil            bool
-		wantErr          bool
+		name              string
+		devfilesDataMap   map[string]*v2.DevfileV2
+		devfilesURLMap    map[string]string
+		dockerfileURLMap  map[string]string
+		componentPortsMap map[string][]int
+		isNil             bool
+		wantErr           bool
 	}{
 		{
 			name: "Kubernetes Components present",
@@ -670,7 +814,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -684,6 +828,31 @@ func TestUpdateComponentStub(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			name: "Detected ports present",
+			devfilesDataMap: map[string]*v2.DevfileV2{
+				"./": {
+					Devfile: devfileAPIV1.Devfile{
+						DevfileHeader: devfile.DevfileHeader{
+							SchemaVersion: "2.2.0",
+							Metadata: devfile.DevfileMetadata{
+								Name:        "test-devfile",
+								Language:    "language",
+								ProjectType: "project",
+							},
+						},
+						DevWorkspaceTemplateSpec: devfileAPIV1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: devfileAPIV1.DevWorkspaceTemplateSpecContent{
+								Components: componentsValidWithPort,
+							},
+						},
+					},
+				},
+			},
+			componentPortsMap: map[string][]int{
+				"./": {8080},
 			},
 		},
 		{
@@ -692,7 +861,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -712,12 +881,12 @@ func TestUpdateComponentStub(t *testing.T) {
 			},
 		},
 		{
-			name: "Kubernetes Components present with a devfile & dockerfile URL",
+			name: "Kubernetes Components present with a devfile & Dockerfile URL",
 			devfilesDataMap: map[string]*v2.DevfileV2{
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -740,9 +909,18 @@ func TestUpdateComponentStub(t *testing.T) {
 			},
 		},
 		{
-			name: "dockerfile URL only",
+			name: "Dockerfile URL only",
 			dockerfileURLMap: map[string]string{
 				"./": "http://someotherlink",
+			},
+		},
+		{
+			name: "Dockerfile URL with ports",
+			dockerfileURLMap: map[string]string{
+				"./": "Dockerfile",
+			},
+			componentPortsMap: map[string][]int{
+				"./": {8080},
 			},
 		},
 		{
@@ -751,7 +929,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -771,7 +949,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -793,7 +971,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -816,7 +994,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -839,7 +1017,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -862,7 +1040,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -885,7 +1063,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -908,7 +1086,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -931,7 +1109,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -954,7 +1132,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -977,7 +1155,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1000,7 +1178,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1023,7 +1201,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1046,7 +1224,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1069,7 +1247,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1092,7 +1270,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1115,7 +1293,7 @@ func TestUpdateComponentStub(t *testing.T) {
 				"./": {
 					Devfile: devfileAPIV1.Devfile{
 						DevfileHeader: devfile.DevfileHeader{
-							SchemaVersion: "2.1.0",
+							SchemaVersion: "2.2.0",
 							Metadata: devfile.DevfileMetadata{
 								Name:        "test-devfile",
 								Language:    "language",
@@ -1125,6 +1303,29 @@ func TestUpdateComponentStub(t *testing.T) {
 						DevWorkspaceTemplateSpec: devfileAPIV1.DevWorkspaceTemplateSpec{
 							DevWorkspaceTemplateSpecContent: devfileAPIV1.DevWorkspaceTemplateSpecContent{
 								Components: componentsStorageRequestParseErr,
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Check err for invalid deploy yaml uri error",
+			devfilesDataMap: map[string]*v2.DevfileV2{
+				"./": {
+					Devfile: devfileAPIV1.Devfile{
+						DevfileHeader: devfile.DevfileHeader{
+							SchemaVersion: "2.2.0",
+							Metadata: devfile.DevfileMetadata{
+								Name:        "test-devfile",
+								Language:    "language",
+								ProjectType: "project",
+							},
+						},
+						DevWorkspaceTemplateSpec: devfileAPIV1.DevWorkspaceTemplateSpec{
+							DevWorkspaceTemplateSpecContent: devfileAPIV1.DevWorkspaceTemplateSpecContent{
+								Components: componentsInvalidDeployYamlErr,
 							},
 						},
 					},
@@ -1157,14 +1358,19 @@ func TestUpdateComponentStub(t *testing.T) {
 			ctrl.SetLogger(zap.New(zap.UseFlagOptions(&zap.Options{
 				Development: true,
 			})))
+			fakeClient := NewFakeClient(t)
+			fakeClient.MockGet = func(ctx context.Context, key types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+				return nil
+			}
 			r := ComponentDetectionQueryReconciler{
-				Log: ctrl.Log.WithName("TestUpdateComponentStub"),
+				Client: fakeClient,
+				Log:    ctrl.Log.WithName("TestUpdateComponentStub"),
 			}
 			var err error
 			if tt.isNil {
-				err = r.updateComponentStub(nil, devfilesMap, nil, nil)
+				err = r.updateComponentStub(ctrl.Request{}, nil, devfilesMap, nil, nil, nil)
 			} else {
-				err = r.updateComponentStub(&componentDetectionQuery, devfilesMap, tt.devfilesURLMap, tt.dockerfileURLMap)
+				err = r.updateComponentStub(ctrl.Request{}, &componentDetectionQuery, devfilesMap, tt.devfilesURLMap, tt.dockerfileURLMap, tt.componentPortsMap)
 			}
 
 			if tt.wantErr && (err == nil) {
@@ -1184,14 +1390,10 @@ func TestUpdateComponentStub(t *testing.T) {
 						assert.Equal(t, hasCompDetection.ProjectType, tt.devfilesDataMap[hasCompDetection.ComponentStub.Source.GitSource.Context].Metadata.ProjectType, "The project type should be the same")
 
 						// Devfile Found
-						assert.Equal(t, hasCompDetection.DevfileFound, len(tt.devfilesURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context]) == 0, "The devfile found did not match expected")
+						assert.Equal(t, hasCompDetection.DevfileFound, len(tt.devfilesURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context]) != 0, "The devfile found did not match expected")
 
 						// Component Name
-						if len(tt.devfilesDataMap[hasCompDetection.ComponentStub.Source.GitSource.Context].Metadata.Name) > 0 {
-							assert.Contains(t, hasCompDetection.ComponentStub.ComponentName, tt.devfilesDataMap[hasCompDetection.ComponentStub.Source.GitSource.Context].Metadata.Name, "The component name did not match the expected")
-						} else {
-							assert.Contains(t, hasCompDetection.ComponentStub.ComponentName, "component", "The component name did not match the expected")
-						}
+						assert.Contains(t, hasCompDetection.ComponentStub.ComponentName, "url", "The component name did not match the expected")
 
 						// Devfile URL
 						if len(tt.devfilesURLMap) > 0 {
@@ -1204,14 +1406,14 @@ func TestUpdateComponentStub(t *testing.T) {
 						if len(tt.dockerfileURLMap) > 0 {
 							assert.NotNil(t, hasCompDetection.ComponentStub.Source.GitSource, "The git source cannot be nil for this test")
 							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.URL, "url", "The URL should match")
-							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.DockerfileURL, tt.dockerfileURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context], "The dockerfile URL should match")
+							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.DockerfileURL, tt.dockerfileURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context], "The Dockerfile URL should match")
 						}
 
 						for _, devfileComponent := range tt.devfilesDataMap[hasCompDetection.ComponentStub.Source.GitSource.Context].Components {
 							if devfileComponent.Kubernetes != nil {
 								componentAttributes := devfileComponent.Attributes
 								var containerENVs []corev1.EnvVar
-								err := componentAttributes.GetInto(containerENVKey, &containerENVs)
+								err := componentAttributes.GetInto(devfilePkg.ContainerENVKey, &containerENVs)
 								assert.Nil(t, err, "err should be nil")
 								for _, devfileEnv := range containerENVs {
 									matched := false
@@ -1226,40 +1428,40 @@ func TestUpdateComponentStub(t *testing.T) {
 								limits := hasCompDetection.ComponentStub.Resources.Limits
 								if len(limits) > 0 {
 									resourceCPULimit := limits[corev1.ResourceCPU]
-									assert.Equal(t, resourceCPULimit.String(), devfileComponent.Attributes.GetString(cpuLimitKey, &err), "The cpu limit should be the same")
+									assert.Equal(t, resourceCPULimit.String(), devfileComponent.Attributes.GetString(devfilePkg.CpuLimitKey, &err), "The cpu limit should be the same")
 									assert.Nil(t, err, "err should be nil")
 
 									resourceMemoryLimit := limits[corev1.ResourceMemory]
-									assert.Equal(t, resourceMemoryLimit.String(), devfileComponent.Attributes.GetString(memoryLimitKey, &err), "The memory limit should be the same")
+									assert.Equal(t, resourceMemoryLimit.String(), devfileComponent.Attributes.GetString(devfilePkg.MemoryLimitKey, &err), "The memory limit should be the same")
 									assert.Nil(t, err, "err should be nil")
 
 									resourceStorageLimit := limits[corev1.ResourceStorage]
-									assert.Equal(t, resourceStorageLimit.String(), devfileComponent.Attributes.GetString(storageLimitKey, &err), "The storage limit should be the same")
+									assert.Equal(t, resourceStorageLimit.String(), devfileComponent.Attributes.GetString(devfilePkg.StorageLimitKey, &err), "The storage limit should be the same")
 									assert.Nil(t, err, "err should be nil")
 								}
 
 								requests := hasCompDetection.ComponentStub.Resources.Requests
 								if len(requests) > 0 {
 									resourceCPURequest := requests[corev1.ResourceCPU]
-									assert.Equal(t, resourceCPURequest.String(), devfileComponent.Attributes.GetString(cpuRequestKey, &err), "The cpu request should be the same")
+									assert.Equal(t, resourceCPURequest.String(), devfileComponent.Attributes.GetString(devfilePkg.CpuRequestKey, &err), "The cpu request should be the same")
 									assert.Nil(t, err, "err should be nil")
 
 									resourceMemoryRequest := requests[corev1.ResourceMemory]
-									assert.Equal(t, resourceMemoryRequest.String(), devfileComponent.Attributes.GetString(memoryRequestKey, &err), "The memory request should be the same")
+									assert.Equal(t, resourceMemoryRequest.String(), devfileComponent.Attributes.GetString(devfilePkg.MemoryRequestKey, &err), "The memory request should be the same")
 									assert.Nil(t, err, "err should be nil")
 
 									resourceStorageRequest := requests[corev1.ResourceStorage]
-									assert.Equal(t, resourceStorageRequest.String(), devfileComponent.Attributes.GetString(storageRequestKey, &err), "The storage request should be the same")
+									assert.Equal(t, resourceStorageRequest.String(), devfileComponent.Attributes.GetString(devfilePkg.StorageRequestKey, &err), "The storage request should be the same")
 									assert.Nil(t, err, "err should be nil")
 								}
 
-								assert.Equal(t, hasCompDetection.ComponentStub.Replicas, int(devfileComponent.Attributes.GetNumber(replicaKey, &err)), "The replicas should be the same")
+								assert.Equal(t, hasCompDetection.ComponentStub.Replicas, int(devfileComponent.Attributes.GetNumber(devfilePkg.ReplicaKey, &err)), "The replicas should be the same")
 								assert.Nil(t, err, "err should be nil")
 
-								assert.Equal(t, hasCompDetection.ComponentStub.TargetPort, int(devfileComponent.Attributes.GetNumber(containerImagePortKey, &err)), "The target port should be the same")
+								assert.Equal(t, hasCompDetection.ComponentStub.TargetPort, int(devfileComponent.Attributes.GetNumber(devfilePkg.ContainerImagePortKey, &err)), "The target port should be the same")
 								assert.Nil(t, err, "err should be nil")
 
-								assert.Equal(t, hasCompDetection.ComponentStub.Route, devfileComponent.Attributes.GetString(routeKey, &err), "The route should be the same")
+								assert.Equal(t, hasCompDetection.ComponentStub.Route, devfileComponent.Attributes.GetString(devfilePkg.RouteKey, &err), "The route should be the same")
 								assert.Nil(t, err, "err should be nil")
 
 								break // dont check for the second Kubernetes component
@@ -1278,13 +1480,13 @@ func TestUpdateComponentStub(t *testing.T) {
 						assert.Equal(t, hasCompDetection.DevfileFound, false, "The devfile found did not match expected")
 
 						// Component Name
-						assert.Contains(t, hasCompDetection.ComponentStub.ComponentName, "component", "The component name did not match the expected")
+						assert.Contains(t, hasCompDetection.ComponentStub.ComponentName, "url", "The component name did not match the expected")
 
 						// Dockerfile URL
 						if len(tt.dockerfileURLMap) > 0 {
 							assert.NotNil(t, hasCompDetection.ComponentStub.Source.GitSource, "The git source cannot be nil for this test")
 							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.URL, "url", "The URL should match")
-							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.DockerfileURL, tt.dockerfileURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context], "The dockerfile URL should match")
+							assert.Equal(t, hasCompDetection.ComponentStub.Source.GitSource.DockerfileURL, tt.dockerfileURLMap[hasCompDetection.ComponentStub.Source.GitSource.Context], "The Dockerfile URL should match")
 						}
 					}
 				}
@@ -1293,50 +1495,140 @@ func TestUpdateComponentStub(t *testing.T) {
 	}
 }
 
-func TestCheckComponentName(t *testing.T) {
+func TestGetComponentName(t *testing.T) {
+
 	tests := []struct {
-		name                 string
-		componentName        string
-		componentDetectedMap appstudiov1alpha1.ComponentDetectionMap
-		wantName             string
+		name         string
+		gitSource    *appstudiov1alpha1.GitSource
+		expectedName string
 	}{
 		{
-			name:          "component already present",
-			componentName: "python",
-			componentDetectedMap: appstudiov1alpha1.ComponentDetectionMap{
-				"python":   appstudiov1alpha1.ComponentDetectionDescription{},
-				"python-1": appstudiov1alpha1.ComponentDetectionDescription{},
-				"nodejs":   appstudiov1alpha1.ComponentDetectionDescription{},
-				"nodejs-1": appstudiov1alpha1.ComponentDetectionDescription{},
+			name: "valid repo name",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/devfile-sample-go-basic",
 			},
-			wantName: "python-2",
+			expectedName: "devfile-sample-go-basic",
 		},
 		{
-			name:          "component not present",
-			componentName: "nodejs",
-			componentDetectedMap: appstudiov1alpha1.ComponentDetectionMap{
-				"python": appstudiov1alpha1.ComponentDetectionDescription{},
+			name: "long repo name with special chars",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/123-testdevfilego--ImportRepository--withaverylongreporitoryname-test-validation-and-generation",
 			},
-			wantName: "nodejs",
+			expectedName: "comp-123-testdevfilego--importrepository--withaverylongrep",
 		},
 		{
-			name:          "component already present edge",
-			componentName: "component",
-			componentDetectedMap: appstudiov1alpha1.ComponentDetectionMap{
-				"component":   appstudiov1alpha1.ComponentDetectionDescription{},
-				"component-1": appstudiov1alpha1.ComponentDetectionDescription{},
-				"component-2": appstudiov1alpha1.ComponentDetectionDescription{},
-				"component-3": appstudiov1alpha1.ComponentDetectionDescription{},
-				"Component-4": appstudiov1alpha1.ComponentDetectionDescription{},
+			name: "numeric repo name",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/123454678.git",
 			},
-			wantName: "component-4",
+			expectedName: "comp-123454678",
+		},
+		{
+			name: "error when look for hc",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/devfile-sample-go-basic",
+			},
+			expectedName: "devfile-sample-go-basic",
+		},
+		{
+			name: "hc exist with conflict name",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/devfile-sample-go-basic",
+			},
+			expectedName: "devfile-sample-go-basic",
+		},
+		{
+			name: "valid repo name with context",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL:     "https://github.com/devfile-samples/devfile-multi-component",
+				Context: "nodejs",
+			},
+			expectedName: "nodejs-devfile-multi-component",
+		},
+		{
+			name: "repo URL with forward slash at the end",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL: "https://github.com/devfile-samples/devfile-multi-component/",
+			},
+			expectedName: "devfile-multi-component",
+		},
+		{
+			name: "repo URL with forward slash and context",
+			gitSource: &appstudiov1alpha1.GitSource{
+				URL:     "https://github.com/devfile-samples/devfile-multi-component/",
+				Context: "nodejs",
+			},
+			expectedName: "nodejs-devfile-multi-component",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotName := checkComponentName(tt.componentName, tt.componentDetectedMap)
-			assert.Equal(t, tt.wantName, gotName, "the name should match")
+			gotComponentName := getComponentName(tt.gitSource)
+			assert.Contains(t, gotComponentName, tt.expectedName, "the component name should contain repo name")
+			assert.NotEqual(t, tt.expectedName, gotComponentName, "the component name should not equal to repo name")
+			gotComponentName2 := getComponentName(tt.gitSource)
+			assert.Contains(t, gotComponentName2, tt.expectedName, "the component name should contain repo name")
+			assert.NotEqual(t, gotComponentName, gotComponentName2, "the two generated component names should not equal")
 		})
 	}
+
+}
+
+func TestSanitizeComponentName(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		componentName string
+		want          string
+	}{
+		{
+			name:          "simple component name",
+			componentName: "devfile-sample-go-basic",
+			want:          "devfile-sample-go-basic",
+		},
+		{
+			name:          "simple component name, all numbers",
+			componentName: "123412341234",
+			want:          "comp-123412341234",
+		},
+		{
+			name:          "simple component name, start with a number",
+			componentName: "123-testcomp",
+			want:          "comp-123-testcomp",
+		},
+		{
+			name:          "Empty string, should have a name generated for it",
+			componentName: "",
+		},
+		{
+			name:          "component name with uppercase",
+			componentName: "devfile-SAMPLE-gO-BASIC",
+			want:          "devfile-sample-go-basic",
+		},
+		{
+			name:          "component name with greater than 58 characters",
+			componentName: "devfile-sample-go-basic-devfile-sample-go-basic-devfile-sample",
+			want:          "devfile-sample-go-basic-devfile-sample-go-basic-devfile-sa-",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sanitizedName := sanitizeComponentName(tt.componentName)
+
+			if tt.componentName == "" {
+				splitString := strings.Split(sanitizedName, "-")
+				if len(splitString) != 2 || splitString[0] == "" || splitString[1] == "" {
+					t.Errorf("TestSanitizeComponentName(): expected generated name for empty component name, got %v", sanitizedName)
+				}
+			} else {
+				if !strings.Contains(sanitizedName, tt.want) {
+					t.Errorf("TestSanitizeComponentName(): want %v, got %v", tt.want, sanitizedName)
+				}
+			}
+
+		})
+	}
+
 }

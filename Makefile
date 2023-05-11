@@ -44,10 +44,10 @@ GITHUB_ORG ?= redhat-appstudio-appdata
 DEVFILE_REGISTRY_URL ?= https://registry.devfile.io
 ENABLE_WEBHOOKS ?= true
 
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+APPLICATION_API_CRD = https://raw.githubusercontent.com/redhat-appstudio/application-api/main/manifests/application-api-customresourcedefinitions.yaml
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.21
+ENVTEST_K8S_VERSION = 1.22
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -55,6 +55,9 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+
+# create the temporary directory under the same parent dir as the Makefile
+TEMP_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.tmp
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -83,13 +86,10 @@ help: ## Display this help.
 ##@ Development
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..."
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
-fmt: ## Run go fmt against code.
-	go fmt ./...
 
 ### fmt_license: ensure license header is set on all files
 fmt_license:
@@ -116,14 +116,27 @@ check_fmt:
 	    echo "Licenses are not formatted; run 'make fmt_license'"; exit 1 ;\
 	  fi \
 
+
+### fmt: Runs go fmt against code.  Borrowed from DWO
+fmt:
+  ifneq ($(shell command -v goimports 2> /dev/null),)
+	find . -not -path '*/\.*' -not -name '*zz_generated*.go' -name '*.go' -exec goimports -w {} \;
+  else
+	  @echo "WARN: goimports is not installed -- formatting using go fmt instead."
+	  @echo "      Please install goimports to ensure file imports are consistent."
+	  go fmt -x ./...
+  endif
+
 vet: ## Run go vet against code.
 	go vet ./...
 
-gosec: 
-	# Run this command, to install gosec, if not installed:
-	# go get -u github.com/securego/gosec/v2/cmd/gosec
-	gosec ./...
-
+### gosec - runs the gosec scanner for non-test files in this repo
+.PHONY: gosec
+gosec:
+	# Run this command to install gosec, if not installed:
+	# go install github.com/securego/gosec/v2/cmd/gosec@latest
+	gosec -no-fail -fmt=sarif -out=gosec.sarif  ./...
+	
 lint:
 	golangci-lint --version
 	GOMAXPROCS=2 golangci-lint run --fix --verbose --timeout 300s
@@ -153,14 +166,11 @@ uninstall-cert:
 
 ##@ Deployment
 
-install-kcp: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
 install: manifests kustomize #install-cert ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+	kubectl apply -f $(APPLICATION_API_CRD)
 
 uninstall: manifests kustomize #uninstall-cert ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+	kubectl delete -f $(APPLICATION_API_CRD)
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
@@ -169,20 +179,13 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-deploy-kcp: install ## Install CRDs and deploy HAS on KCP
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	GITHUB_ORG=${GITHUB_ORG} DEVFILE_REGISTRY_URL=${DEVFILE_REGISTRY_URL} $(KUSTOMIZE) build config/kcp | kubectl apply -f -
-
-undeploy-kcp: # Undeploy HAS from KCP (including CRDs)
-	$(KUSTOMIZE) build config/kcp | kubectl delete -f -
-
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.10.0)
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
@@ -201,7 +204,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
@@ -261,18 +264,11 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
-
-APPLICATIONS_CRD=$(shell pwd)/config/crd/bases/appstudio.redhat.com_applications.yaml
-COMPONENT_DETECTION_QUERIES_CRD=$(shell pwd)/config/crd/bases/appstudio.redhat.com_componentdetectionqueries.yaml
-COMPONENT_CRD=$(shell pwd)/config/crd/bases/appstudio.redhat.com_components.yaml
-
+	
 .PHONY: apply-crds
 apply-crds:
 	kubectl apply \
-	-f $(APPLICATIONS_CRD) \
-	-f $(COMPONENT_DETECTION_QUERIES_CRD) \
-	-f $(COMPONENT_CRD)
-
+	-f $(APPLICATION_API_CRD)
 .PHONY: debug
 debug: dlv generate manifests kustomize apply-crds
 	$(MAKE) debug-stop; \
@@ -286,3 +282,7 @@ debug: dlv generate manifests kustomize apply-crds
 debug-stop:
 	echo "Terminate debug session"
 	pkill dlv || true
+
+ensure-tmp:
+	mkdir -p $(TEMP_DIR)
+

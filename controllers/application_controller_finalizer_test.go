@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Red Hat, Inc.
+Copyright 2021-2023 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	devfile "github.com/redhat-appstudio/application-service/pkg/devfile"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,7 +55,10 @@ var _ = Describe("Application controller finalizer counter tests", func() {
 		It("Should delete successfully even when finalizer fails after 5 times", func() {
 			// Create a simple Application CR and get its devfile
 			fetchedApp := createAndFetchSimpleApp(AppName, AppNamespace, DisplayName, Description)
-			curDevfile, err := devfile.ParseDevfileModel(fetchedApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: fetchedApp.Status.Devfile,
+			}
+			curDevfile, err := devfile.ParseDevfile(devfileSrc)
 
 			// Make sure the devfile model was properly set
 			Expect(fetchedApp.Status.Devfile).Should(Not(Equal("")))
@@ -95,7 +98,10 @@ var _ = Describe("Application controller finalizer counter tests", func() {
 			// Create an Application resource and get its devfile
 			fetchedHasApp := createAndFetchSimpleApp(AppName, AppNamespace, DisplayName, Description)
 			Expect(fetchedHasApp.Status.Devfile).Should(Not(Equal("")))
-			curDevfile, err := devfile.ParseDevfileModel(fetchedHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: fetchedHasApp.Status.Devfile,
+			}
+			curDevfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Set an invalid gitops URL and update the status of the resource
@@ -164,7 +170,42 @@ func createAndFetchSimpleApp(name string, namespace string, display string, desc
 	return fetchedHasApp
 }
 
-func TestGetFinalizeCount(t *testing.T) {
+func createAndFetchSimpleAppWithRepo(name string, namespace string, display string, description string, gitopsRepo string) *appstudiov1alpha1.Application {
+	ctx := context.Background()
+
+	hasApp := &appstudiov1alpha1.Application{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "appstudio.redhat.com/v1alpha1",
+			Kind:       "Application",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: appstudiov1alpha1.ApplicationSpec{
+			DisplayName: display,
+			Description: description,
+			GitOpsRepository: appstudiov1alpha1.ApplicationGitRepository{
+				URL: gitopsRepo,
+			},
+		},
+	}
+
+	Expect(k8sClient.Create(ctx, hasApp)).Should(Succeed())
+
+	// Look up the has app resource that was created.
+	// num(conditions) may still be < 1 on the first try, so retry until at least _some_ condition is set
+	hasAppLookupKey := types.NamespacedName{Name: name, Namespace: namespace}
+	fetchedHasApp := &appstudiov1alpha1.Application{}
+	Eventually(func() bool {
+		k8sClient.Get(context.Background(), hasAppLookupKey, fetchedHasApp)
+		return len(fetchedHasApp.Status.Conditions) > 0
+	}, timeout, interval).Should(BeTrue())
+
+	return fetchedHasApp
+}
+
+func TestGetCounterAnnotation(t *testing.T) {
 	tests := []struct {
 		name        string
 		application appstudiov1alpha1.Application
@@ -190,19 +231,19 @@ func TestGetFinalizeCount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			count, err := getFinalizeCount(&tt.application)
+			count, err := getCounterAnnotation(finalizeCount, &tt.application)
 			if err != nil {
-				t.Errorf("TestGetFinalizeCount() unexpected error: %v", err)
+				t.Errorf("TestGetCounterAnnotation() unexpected error: %v", err)
 			}
 			if count != tt.want {
-				t.Errorf("TestGetFinalizeCount() error: expected %v got %v", tt.want, count)
+				t.Errorf("TestGetCounterAnnotation() error: expected %v got %v", tt.want, count)
 			}
 		})
 	}
 
 }
 
-func TestSetFinalizeCount(t *testing.T) {
+func TestSetCounterAnnotation(t *testing.T) {
 	tests := []struct {
 		name        string
 		application appstudiov1alpha1.Application
@@ -231,13 +272,13 @@ func TestSetFinalizeCount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setFinalizeCount(&tt.application, tt.count)
-			count, err := getFinalizeCount(&tt.application)
+			setCounterAnnotation(finalizeCount, &tt.application, tt.count)
+			count, err := getCounterAnnotation(finalizeCount, &tt.application)
 			if err != nil {
-				t.Errorf("TestGetFinalizeCount() unexpected error: %v", err)
+				t.Errorf("TestSetCounterAnnotation() unexpected error: %v", err)
 			}
 			if count != tt.want {
-				t.Errorf("TestGetFinalizeCount() error: expected %v got %v", tt.want, count)
+				t.Errorf("TestSetCounterAnnotation() error: expected %v got %v", tt.want, count)
 			}
 		})
 	}

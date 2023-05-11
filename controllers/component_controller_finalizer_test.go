@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
 
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	devfile "github.com/redhat-appstudio/application-service/pkg/devfile"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,8 +32,8 @@ import (
 var _ = Describe("Application controller finalizer counter tests", func() {
 
 	const (
-		AppName        = "test-application"
-		CompName       = "test-component"
+		AppName        = "test-application-finalizer"
+		CompName       = "test-component-finalizer"
 		AppNamespace   = "default"
 		DisplayName    = "petclinic"
 		Description    = "Simple petclinic app"
@@ -182,7 +182,10 @@ var _ = Describe("Application controller finalizer counter tests", func() {
 			Expect(createdHasApp.Status.Devfile).Should(Not(Equal("")))
 
 			// delete the project so that the component delete finalizer fails
-			appDevfile, err := devfile.ParseDevfileModel(createdHasApp.Status.Devfile)
+			devfileSrc := devfile.DevfileSrc{
+				Data: createdHasApp.Status.Devfile,
+			}
+			appDevfile, err := devfile.ParseDevfile(devfileSrc)
 			Expect(err).ToNot(HaveOccurred())
 
 			err = appDevfile.DeleteProject(ComponentName)
@@ -262,7 +265,7 @@ var _ = Describe("Application controller finalizer counter tests", func() {
 			createdHasComp := &appstudiov1alpha1.Component{}
 			Eventually(func() bool {
 				k8sClient.Get(context.Background(), hasCompLookupKey, createdHasComp)
-				return len(createdHasComp.Status.Conditions) > 0 && createdHasComp.Status.GitOps.RepositoryURL != ""
+				return len(createdHasComp.Status.Conditions) > 1 && createdHasComp.Status.GitOps.RepositoryURL != ""
 			}, timeout, interval).Should(BeTrue())
 
 			// Make sure the devfile model was properly set in Component
@@ -314,8 +317,8 @@ var _ = Describe("Application controller finalizer counter tests", func() {
 
 	Context("Delete Component CR with specified git branch and context", func() {
 		It("Should delete successfully", func() {
-			applicationName := AppName + "3"
-			componentName := CompName + "3"
+			applicationName := AppName + "4"
+			componentName := CompName + "4"
 
 			// Create a simple Application CR and get its devfile
 			createAndFetchSimpleApp(applicationName, AppNamespace, DisplayName, Description)

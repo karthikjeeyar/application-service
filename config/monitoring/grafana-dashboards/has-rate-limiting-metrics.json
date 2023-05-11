@@ -1,0 +1,4910 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 10,
+  "iteration": 1683726049194,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "description": "Git operations that have underlying go-github API calls.  Sum across all controllers and all tokens over an interval of 1 hr",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 50000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 48,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.17",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{operation=\"GenerateNewRepository\"}[1h]))",
+          "interval": "",
+          "legendFormat": "GenerateNewRepository",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{operation=\"DeleteRepository\"}[1h]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "DeleteRepository",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\"}[1h]))",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "CDQ_GetDefaultBranchFromURL",
+          "refId": "C"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetBranchFromURL\"}[1h]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "CDQ_GetBranchFromURL",
+          "refId": "D"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\"}[1h]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Comp_GetDefaultBranchFromURL",
+          "refId": "E"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\"}[1h]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Comp_GetBranchFromURL",
+          "refId": "F"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Overall Number of Rate Limiting Git Operations per hour",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 46,
+      "panels": [
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 11
+          },
+          "id": 50,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token1\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetBranchFromURL\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 11
+          },
+          "id": 52,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token2\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 19
+          },
+          "id": 51,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token3\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetDefaultBranchFromURL\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token3",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 19
+          },
+          "id": 53,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token4\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GetDefaultBranchFromURL\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GetBranchFromURL\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token4",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 27
+          },
+          "id": 54,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token5\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token5",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 27
+          },
+          "id": 55,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token6\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token6",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 35
+          },
+          "id": 57,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token7\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token7",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 35
+          },
+          "id": 56,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token8\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token8",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 43
+          },
+          "id": 58,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token9\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token9",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Primary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 43
+          },
+          "id": 59,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token10\"}[1h])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token10",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Rate Limiting Git Operations per token per hour",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 61,
+      "panels": [
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "id": 62,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token1\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetDefaultBranchFromURL\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "id": 63,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token2\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "id": 65,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token3\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token3",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "id": 64,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token4\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token4",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 28
+          },
+          "id": 66,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token5\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token5",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 28
+          },
+          "id": 67,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token6\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetBranchFromURL\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\",operation=\"GetBranchFromURL\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token6",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 36
+          },
+          "id": 68,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token7\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\",operation=\"GetBranchFromURL\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\",operation=\"GetBranchFromURL\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token7",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 36
+          },
+          "id": 69,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token8\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token8",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 44
+          },
+          "id": 70,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token9\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token9",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Approximate Secondary Rate Limits",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 44
+          },
+          "id": 71,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateNewRepository\", tokenName=\"token10\"}[5m])",
+              "interval": "",
+              "legendFormat": "GenerateNewRepository",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"DeleteRepository\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "DeleteRepository",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetDefaultBranchFromURL",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"ComponentDetectionQuery\", operation=\"GetBranchFromURL\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CDQ_GetBranchFromURL",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetDefaultBranchFromURL\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetDefaultBranchFromURL",
+              "refId": "E"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetBranchFromURL\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Comp_GetBranchFromURL",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token10",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Rate Limiting Git Operations per token per 5min",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 73,
+      "panels": [
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 11
+          },
+          "id": 75,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token1\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 11
+          },
+          "id": 76,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token2\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 19
+          },
+          "id": 77,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token3\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token3",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 19
+          },
+          "id": 78,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token4\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token4",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 27
+          },
+          "id": 79,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token5\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token5",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 27
+          },
+          "id": 80,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token6\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token6",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 35
+          },
+          "id": 81,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token7\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token7",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 35
+          },
+          "id": 82,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token8\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token8",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 43
+          },
+          "id": 83,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token9\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token9",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per hour",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 43
+          },
+          "id": 84,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token10\"}[1h])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token10",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Non Rate Limiting Git Operations per token per hour",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 86,
+      "panels": [
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 14
+          },
+          "id": 87,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token1\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 14
+          },
+          "id": 88,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token2\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 22
+          },
+          "id": 89,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token3\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token3",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 22
+          },
+          "id": 90,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token4\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token4",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 30
+          },
+          "id": 91,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token5\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token5",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 30
+          },
+          "id": 92,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token6\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token6",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 38
+          },
+          "id": 93,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token7\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token7",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 38
+          },
+          "id": 94,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token8\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token8",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 46
+          },
+          "id": 95,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token9\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token9",
+          "type": "timeseries"
+        },
+        {
+          "datasource": null,
+          "description": "Non Rate limiting Git Operations per 5m",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "graph": false,
+                  "legend": false,
+                  "tooltip": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 46
+          },
+          "id": 96,
+          "options": {
+            "graph": {},
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltipOptions": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "7.5.17",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"SnapshotEnvironmentBinding\", operation=\"GetCommitIDFromRepo\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "ASEB_GetCommitIDFromRepo",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{controller=\"Component\", operation=\"GetCommitIDFromRepo\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Component_GetCommitIDFromRepo",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CloneGenerateAndPush\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CloneGenerateAndPush",
+              "refId": "C"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"GenerateOverlaysAndPush\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "GenerateOverlaysAndPush",
+              "refId": "D"
+            },
+            {
+              "exemplar": true,
+              "expr": "increase(controller_git_request{operation=\"CommitAndPush\", tokenName=\"token10\"}[5m])",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "CommitAndPush",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Token10",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Non Rate Limiting Git Operations per token per 5m",
+      "type": "row"
+    }
+  ],
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "HAS Rate Limiting Metrics",
+  "uid": "3e0a9e533b362be65d8262d0297eadb1576a5b8c",
+  "version": 2
+}

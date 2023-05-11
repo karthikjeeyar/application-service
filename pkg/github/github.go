@@ -1,5 +1,5 @@
 //
-// Copyright 2021 Red Hat, Inc.
+// Copyright 2021-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,32 +18,74 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/google/go-github/v41/github"
+	"github.com/redhat-appstudio/application-service/pkg/metrics"
 	"github.com/redhat-appstudio/application-service/pkg/util"
 )
 
 const AppStudioAppDataOrg = "redhat-appstudio-appdata"
 
-func GenerateNewRepositoryName(displayName string, namespace string) string {
-	sanitizedName := util.SanitizeName(displayName)
+// GitHubClient represents a Go-GitHub client, along with the name of the GitHub token that was used to initialize it
+type GitHubClient struct {
+	TokenName          string
+	Token              string
+	Client             *github.Client
+	SecondaryRateLimit SecondaryRateLimit
+}
 
-	repoName := sanitizedName + "-" + namespace + "-" + util.SanitizeName(gofakeit.Verb()) + "-" + util.SanitizeName(gofakeit.Verb())
+type SecondaryRateLimit struct {
+	isLimitReached bool
+	mu             sync.Mutex
+}
+
+type ContextKey string
+
+const (
+	GHClientKey ContextKey = "ghClient"
+)
+
+// ServerError is used to identify gitops repo creation failures caused by server errors
+type ServerError struct {
+	err error
+}
+
+func (e *ServerError) Error() string {
+	return fmt.Errorf("failed to create gitops repo due to error: %v", e.err).Error()
+}
+
+// GenerateNewRepositoryName creates a new gitops repository name, based on the following format:
+// <display-name>-<partial-hash-of-clustername-and-namespace>-<random-word>-<random-word>
+func GenerateNewRepositoryName(displayName, uniqueHash string) string {
+	sanitizedName := util.SanitizeName(displayName)
+	repoName := sanitizedName + "-" + uniqueHash + "-" + util.SanitizeName(gofakeit.Verb()) + "-" + util.SanitizeName(gofakeit.Verb())
 	return repoName
 }
 
-func GenerateNewRepository(client *github.Client, ctx context.Context, orgName string, repoName string, description string) (string, error) {
+func (g *GitHubClient) GenerateNewRepository(ctx context.Context, orgName string, repoName string, description string) (string, error) {
 	isPrivate := false
 	appStudioAppDataURL := "https://github.com/" + orgName + "/"
-
+	metrics.GitOpsRepoCreationTotalReqs.Inc()
 	r := &github.Repository{Name: &repoName, Private: &isPrivate, Description: &description}
-	_, _, err := client.Repositories.Create(ctx, orgName, r)
+	_, resp, err := g.Client.Repositories.Create(ctx, orgName, r)
+
+	if resp != nil && 500 <= resp.StatusCode && resp.StatusCode <= 599 {
+		// return custom error
+		if err != nil {
+			metrics.GitOpsRepoCreationFailed.Inc()
+			return "", &ServerError{err: err}
+		}
+	}
+
 	if err != nil {
 		return "", err
 	}
 	repoURL := appStudioAppDataURL + repoName
+	metrics.GitOpsRepoCreationSucceeded.Inc()
 	return repoURL, nil
 }
 
@@ -56,10 +98,74 @@ func GetRepoNameFromURL(repoURL string, orgName string) (string, error) {
 	return parts[1], nil
 }
 
+// GetRepoAndOrgFromURL returns both the github org and repository name from a given github URL
+// Format must be of the form: <github-domain>/owner/repository(.git)
+// If .git is appended to the end, it will be removed from the returned repo name
+func GetRepoAndOrgFromURL(repoURL string) (string, string, error) {
+	parsedURL, err := url.Parse(repoURL)
+	if err != nil {
+		return "", "", fmt.Errorf("error: invalid URL: %v", repoURL)
+	}
+
+	// The URL Path should contain the org and repo name in the form: orgname/reponame.
+	parts := strings.Split(parsedURL.Path, "/")
+	if len(parts) != 3 {
+		return "", "", fmt.Errorf("error: unable to parse Git repository URL: %v", repoURL)
+	}
+	orgName := parts[1]
+	if orgName == "" {
+		return "", "", fmt.Errorf("error: unable to retrieve organization name from URL: %v", repoURL)
+	}
+	repoName := strings.Split(parts[2], ".git")[0]
+	if repoName == "" {
+		return "", "", fmt.Errorf("error: unable to retrieve repository name from URL: %v", repoURL)
+	}
+	return repoName, orgName, nil
+}
+
+// GetDefaultBranchFromURL returns the default branch of a given repoURL
+func (g *GitHubClient) GetDefaultBranchFromURL(repoURL string, ctx context.Context) (string, error) {
+	repoName, orgName, err := GetRepoAndOrgFromURL(repoURL)
+	if err != nil {
+		return "", err
+	}
+
+	repo, _, err := g.Client.Repositories.Get(ctx, orgName, repoName)
+	if err != nil || repo == nil {
+		return "", fmt.Errorf("failed to get repo %s under %s, error: %v", repoName, orgName, err)
+	}
+
+	return *repo.DefaultBranch, nil
+}
+
+// GetBranchFromURL returns the requested branch of a given repoURL
+func (g *GitHubClient) GetBranchFromURL(repoURL string, ctx context.Context, branchName string) (*github.Branch, error) {
+	repoName, orgName, err := GetRepoAndOrgFromURL(repoURL)
+	if err != nil {
+		return nil, err
+	}
+
+	branch, _, err := g.Client.Repositories.GetBranch(ctx, orgName, repoName, branchName, false)
+	if err != nil || branch == nil {
+		return nil, fmt.Errorf("failed to get branch %s from repo %s under %s, error: %v", branchName, repoName, orgName, err)
+	}
+
+	return branch, nil
+}
+
+// GetLatestCommitSHAFromRepository gets the latest Commit SHA from the repository
+func (g *GitHubClient) GetLatestCommitSHAFromRepository(ctx context.Context, repoName string, orgName string, branch string) (string, error) {
+	commitSHA, _, err := g.Client.Repositories.GetCommitSHA1(ctx, orgName, repoName, branch, "")
+	if err != nil {
+		return "", err
+	}
+	return commitSHA, nil
+}
+
 // Delete Repository takes in the given repository URL and attempts to delete it
-func DeleteRepository(client *github.Client, ctx context.Context, orgName string, repoName string) error {
+func (g *GitHubClient) DeleteRepository(ctx context.Context, orgName string, repoName string) error {
 	// Retrieve just the repository name from the URL
-	_, err := client.Repositories.Delete(ctx, orgName, repoName)
+	_, err := g.Client.Repositories.Delete(ctx, orgName, repoName)
 	if err != nil {
 		return err
 	}

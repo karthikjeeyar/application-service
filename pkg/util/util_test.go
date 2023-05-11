@@ -1,5 +1,5 @@
 //
-// Copyright 2021-2022 Red Hat, Inc.
+// Copyright 2021-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,19 @@ package util
 
 import (
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/devfile/library/v2/pkg/devfile/parser"
+	gitopsgenv1alpha1 "github.com/redhat-developer/gitops-generator/api/v1alpha1"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,6 +67,70 @@ func TestSanitizeDisplayName(t *testing.T) {
 			// Unexpected error
 			if sanitizedName != tt.want {
 				t.Errorf("SanitizeName() error: expected %v got %v", tt.want, sanitizedName)
+			}
+		})
+	}
+}
+
+func TestProcessGitOpsStatus(t *testing.T) {
+	tests := []struct {
+		name         string
+		gitopsStatus appstudiov1alpha1.GitOpsStatus
+		gitToken     string
+		wantURL      string
+		wantBranch   string
+		wantContext  string
+		wantErr      bool
+	}{
+		{
+			name: "gitops status processed as expected",
+			gitopsStatus: appstudiov1alpha1.GitOpsStatus{
+				RepositoryURL: "https://github.com/myrepo",
+				Branch:        "notmain",
+				Context:       "context",
+			},
+			gitToken:    "token",
+			wantURL:     "https://token@github.com/myrepo",
+			wantBranch:  "notmain",
+			wantContext: "context",
+		},
+		{
+			name: "gitops url is empty",
+			gitopsStatus: appstudiov1alpha1.GitOpsStatus{
+				RepositoryURL: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "gitops branch and context not set",
+			gitopsStatus: appstudiov1alpha1.GitOpsStatus{
+				RepositoryURL: "https://github.com/myrepo",
+			},
+			gitToken:    "token",
+			wantURL:     "https://token@github.com/myrepo",
+			wantBranch:  "main",
+			wantContext: "/",
+		},
+		{
+			name: "gitops url parse err",
+			gitopsStatus: appstudiov1alpha1.GitOpsStatus{
+				RepositoryURL: "http://foo.com/?foo\nbar",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gitopsURL, gitopsBranch, gitopsContext, err := ProcessGitOpsStatus(tt.gitopsStatus, tt.gitToken)
+			if tt.wantErr && (err == nil) {
+				t.Error("wanted error but got nil")
+			} else if !tt.wantErr && err != nil {
+				t.Errorf("got unexpected error %v", err)
+			} else {
+				assert.Equal(t, tt.wantURL, gitopsURL, "should be equal")
+				assert.Equal(t, tt.wantBranch, gitopsBranch, "should be equal")
+				assert.Equal(t, tt.wantContext, gitopsContext, "should be equal")
 			}
 		})
 	}
@@ -143,6 +218,7 @@ func TestCloneRepo(t *testing.T) {
 		name      string
 		clonePath string
 		repo      string
+		revision  string
 		token     string
 		wantErr   bool
 	}{
@@ -171,15 +247,34 @@ func TestCloneRepo(t *testing.T) {
 		{
 			name:      "Invalid token, should err out",
 			clonePath: "/tmp/alreadyexistingdir",
-			repo:      "https://github.com/devfile-samples/devfile-sample-java-springboot-basic",
+			repo:      "https://github.com/yangcao77/multi-components-private/",
 			token:     "fake-token",
+			wantErr:   true,
+		},
+		{
+			name:      "Clone Successfully - branch specified as revision",
+			clonePath: "/tmp/testspringboot",
+			repo:      "https://github.com/devfile-resources/node-express-hello-no-devfile",
+			revision:  "testbranch",
+		},
+		{
+			name:      "Clone Successfully - commit specified as revision",
+			clonePath: "/tmp/nodeexpressrevision",
+			repo:      "https://github.com/devfile-resources/node-express-hello-no-devfile",
+			revision:  "22d213a42091199bc1f85a8eac60a5ff82371df3",
+		},
+		{
+			name:      "Invalid revision, should err out",
+			clonePath: "/tmp/nodeexpressrevisioninvalidrevision",
+			repo:      "https://github.com/devfile-resources/node-express-hello-no-devfile",
+			revision:  "fasdfasdfasdfdsklafj2w23",
 			wantErr:   true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CloneRepo(tt.clonePath, tt.repo, tt.token)
+			err := CloneRepo(tt.clonePath, tt.repo, tt.revision, tt.token)
 			if tt.wantErr && (err == nil) {
 				t.Error("wanted error but got nil")
 			} else if !tt.wantErr && err != nil {
@@ -195,6 +290,7 @@ func TestConvertGitHubURL(t *testing.T) {
 		name     string
 		url      string
 		revision string
+		context  string
 		useAPI   bool
 		wantUrl  string
 		wantErr  bool
@@ -213,13 +309,27 @@ func TestConvertGitHubURL(t *testing.T) {
 		{
 			name:    "Successfully convert a github url with a trailing / suffix to raw url",
 			url:     "https://github.com/devfile-samples/devfile-sample-java-springboot-basic/",
+			context: "./",
 			wantUrl: "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/main",
 		},
 		{
-			name:     "Successfully convert a github url with revision and a trailing / suffix to raw url",
+			name:    "Successfully convert a github url with a context to raw url",
+			url:     "https://github.com/devfile-samples/devfile-sample-java-springboot-basic/",
+			context: "testfolder",
+			wantUrl: "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/main/testfolder",
+		},
+		{
+			name:    "Successfully convert a github url with a context with a prefix / to raw url",
+			url:     "https://github.com/devfile-samples/devfile-sample-java-springboot-basic/",
+			context: "/testfolder",
+			wantUrl: "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/main/testfolder",
+		},
+		{
+			name:     "Successfully convert a github url with revision and a trailing / suffix and a context to raw url",
 			url:      "https://github.com/devfile-samples/devfile-sample-java-springboot-basic/",
 			revision: "testbranch",
-			wantUrl:  "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/testbranch",
+			context:  "testfolder",
+			wantUrl:  "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/testbranch/testfolder",
 		},
 		{
 			name:    "Successfully convert a github url with .git to raw url",
@@ -227,10 +337,11 @@ func TestConvertGitHubURL(t *testing.T) {
 			wantUrl: "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/main",
 		},
 		{
-			name:     "Successfully convert a github url with revision and .git to raw url",
+			name:     "Successfully convert a github url with revision and .git and a context with prefix / to raw url",
 			url:      "https://github.com/devfile-samples/devfile-sample-java-springboot-basic.git",
 			revision: "testbranch",
-			wantUrl:  "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/testbranch",
+			context:  "/testfolder",
+			wantUrl:  "https://raw.githubusercontent.com/devfile-samples/devfile-sample-java-springboot-basic/testbranch/testfolder",
 		},
 		{
 			name:    "A non github url",
@@ -262,7 +373,7 @@ func TestConvertGitHubURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			convertedUrl, err := ConvertGitHubURL(tt.url, tt.revision)
+			convertedUrl, err := ConvertGitHubURL(tt.url, tt.revision, tt.context)
 			if tt.wantErr && (err == nil) {
 				t.Error("wanted error but got nil")
 			} else if !tt.wantErr && err != nil {
@@ -305,6 +416,386 @@ func TestCheckWithRegex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotMatch := CheckWithRegex(tt.pattern, tt.test)
 			assert.Equal(t, tt.wantMatch, gotMatch, "the values should match")
+		})
+	}
+}
+
+func TestGetRandomString(t *testing.T) {
+	tests := []struct {
+		name   string
+		length int
+		lower  bool
+	}{
+		{
+			name:   "all lower case string",
+			length: 5,
+			lower:  true,
+		},
+		{
+			name:   "contain upper case string",
+			length: 10,
+			lower:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotString := GetRandomString(tt.length, tt.lower)
+			assert.Equal(t, tt.length, len(gotString), "the values should match")
+
+			if tt.lower == true {
+				assert.Equal(t, strings.ToLower(gotString), gotString, "the values should match")
+			}
+
+			gotString2 := GetRandomString(tt.length, tt.lower)
+			assert.NotEqual(t, gotString, gotString2, "the two random string should not be the same")
+		})
+	}
+}
+
+func TestGetMappedComponent(t *testing.T) {
+
+	other := make([]interface{}, 1)
+	other[0] = appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "deployment1",
+		},
+	}
+
+	tests := []struct {
+		name                string
+		component           appstudiov1alpha1.Component
+		kubernetesResources parser.KubernetesResources
+		want                gitopsgenv1alpha1.GeneratorOptions
+	}{
+		{
+			name: "Test01ComponentSpecFilledIn",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest001",
+					Secret:        "Secret",
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceLimitsCPU: resource.MustParse("1"),
+							corev1.ResourceMemory:    resource.MustParse("1Gi"),
+						},
+					},
+					TargetPort: 8080,
+					Route:      "https://testroute",
+					Env: []corev1.EnvVar{
+						{
+							Name:  "env1",
+							Value: "env1Value",
+						},
+					},
+					ContainerImage:               "myimage:image",
+					SkipGitOpsResourceGeneration: false,
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{
+							GitSource: &appstudiov1alpha1.GitSource{
+								URL:           "https://host/git-repo.git",
+								Revision:      "1.0",
+								Context:       "/context",
+								DevfileURL:    "https://mydevfileurl",
+								DockerfileURL: "https://mydockerfileurl",
+							},
+						},
+					},
+				},
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest001",
+				Secret:      "Secret",
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceLimitsCPU: resource.MustParse("1"),
+						corev1.ResourceMemory:    resource.MustParse("1Gi"),
+					},
+				},
+				TargetPort: 8080,
+				Route:      "https://testroute",
+				BaseEnvVar: []corev1.EnvVar{
+					{
+						Name:  "env1",
+						Value: "env1Value",
+					},
+				},
+				ContainerImage: "myimage:image",
+				GitSource: &gitopsgenv1alpha1.GitSource{
+					URL: "https://host/git-repo.git",
+				},
+			},
+		},
+		{
+			name: "Test02EmptyComponentSource",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest002",
+					Source:        appstudiov1alpha1.ComponentSource{},
+				},
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest002",
+				GitSource:   &gitopsgenv1alpha1.GitSource{},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+			},
+		},
+		{
+			name: "Test03NoSource",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest003",
+				},
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest003",
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+			},
+		},
+		{
+			name: "Test04EmptyComponentSourceUnion",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest004",
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{},
+					},
+				},
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest004",
+				GitSource:   &gitopsgenv1alpha1.GitSource{},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+			},
+		},
+		{
+			name: "Test05EmptyGitSource",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest005",
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{
+							GitSource: &appstudiov1alpha1.GitSource{},
+						},
+					},
+				},
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest005",
+				GitSource:   &gitopsgenv1alpha1.GitSource{},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+			},
+		},
+		{
+			name: "Test06KubernetesResources",
+			component: appstudiov1alpha1.Component{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testcomponent",
+				},
+				Spec: appstudiov1alpha1.ComponentSpec{
+					ComponentName: "frontEnd",
+					Application:   "AppTest005",
+					Source: appstudiov1alpha1.ComponentSource{
+						ComponentSourceUnion: appstudiov1alpha1.ComponentSourceUnion{
+							GitSource: &appstudiov1alpha1.GitSource{
+								URL: "url",
+							},
+						},
+					},
+				},
+			},
+			kubernetesResources: parser.KubernetesResources{
+				Deployments: []appsv1.Deployment{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "deployment1",
+						},
+					},
+				},
+				Services: []corev1.Service{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "service1",
+						},
+					},
+				},
+				Others: other,
+			},
+			want: gitopsgenv1alpha1.GeneratorOptions{
+				Name:        "testcomponent",
+				Application: "AppTest005",
+				GitSource: &gitopsgenv1alpha1.GitSource{
+					URL: "url",
+				},
+				KubernetesResources: gitopsgenv1alpha1.KubernetesResources{
+					Deployments: []appsv1.Deployment{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "deployment1",
+							},
+						},
+					},
+					Services: []corev1.Service{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "service1",
+							},
+						},
+					},
+					Others: other,
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mappedComponent := GetMappedGitOpsComponent(tt.component, tt.kubernetesResources)
+			assert.True(t, tt.want.Name == mappedComponent.Name, "Expected ObjectMeta.Name: %s, is different than actual: %s", tt.want.Name, mappedComponent.Name)
+			assert.True(t, tt.want.Application == mappedComponent.Application, "Expected Spec.Application: %s, is different than actual: %s", tt.want.Application, mappedComponent.Application)
+			assert.True(t, tt.want.Secret == mappedComponent.Secret, "Expected Spec.Secret: %s, is different than actual: %s", tt.want.Secret, mappedComponent.Secret)
+			assert.True(t, reflect.DeepEqual(tt.want.Resources, mappedComponent.Resources), "Expected Spec.Resources: %s, is different than actual: %s", tt.want.Resources, mappedComponent.Resources)
+			assert.True(t, tt.want.Route == mappedComponent.Route, "Expected Spec.Route: %s, is different than actual: %s", tt.want.Route, mappedComponent.Route)
+			assert.True(t, reflect.DeepEqual(tt.want.BaseEnvVar, mappedComponent.BaseEnvVar), "Expected Spec.Env: %s, is different than actual: %s", tt.want.BaseEnvVar, mappedComponent.BaseEnvVar)
+			assert.True(t, tt.want.ContainerImage == mappedComponent.ContainerImage, "Expected Spec.ContainerImage: %s, is different than actual: %s", tt.want.ContainerImage, mappedComponent.ContainerImage)
+
+			if tt.want.GitSource != nil {
+				assert.True(t, tt.want.GitSource.URL == mappedComponent.GitSource.URL, "Expected GitSource URL: %s, is different than actual: %s", tt.want.GitSource.URL, mappedComponent.GitSource.URL)
+			}
+
+			if !reflect.DeepEqual(tt.want.KubernetesResources, gitopsgenv1alpha1.KubernetesResources{}) {
+				for _, wantDeployment := range tt.want.KubernetesResources.Deployments {
+					matched := false
+					for _, gotDeployment := range mappedComponent.KubernetesResources.Deployments {
+						if wantDeployment.Name == gotDeployment.Name {
+							matched = true
+							break
+						}
+					}
+					assert.True(t, matched, "Expected Deployment: %s, but didnt find in actual", wantDeployment.Name)
+				}
+
+				for _, wantService := range tt.want.KubernetesResources.Services {
+					matched := false
+					for _, gotService := range mappedComponent.KubernetesResources.Services {
+						if wantService.Name == gotService.Name {
+							matched = true
+							break
+						}
+					}
+					assert.True(t, matched, "Expected Service: %s, but didnt find in actual", wantService.Name)
+				}
+
+				for _, wantRoute := range tt.want.KubernetesResources.Routes {
+					matched := false
+					for _, gotRoute := range mappedComponent.KubernetesResources.Routes {
+						if wantRoute.Name == gotRoute.Name {
+							matched = true
+							break
+						}
+					}
+					assert.True(t, matched, "Expected Route: %s, but didnt find in actual", wantRoute.Name)
+				}
+
+				for _, wantIngress := range tt.want.KubernetesResources.Ingresses {
+					matched := false
+					for _, gotIngress := range mappedComponent.KubernetesResources.Ingresses {
+						if wantIngress.Name == gotIngress.Name {
+							matched = true
+							break
+						}
+					}
+					assert.True(t, matched, "Expected Ingress: %s, but didnt find in actual", wantIngress.Name)
+				}
+
+				for _, wantOther := range tt.want.KubernetesResources.Others {
+					matched := false
+					wantDeployment := wantOther.(appsv1.Deployment)
+
+					for _, gotOther := range mappedComponent.KubernetesResources.Others {
+						gotDeployment := gotOther.(appsv1.Deployment)
+						if wantDeployment.Name == gotDeployment.Name {
+							matched = true
+							break
+						}
+					}
+					assert.True(t, matched, "Expected Other: %s, but didnt find in actual", wantDeployment.Name)
+				}
+			}
 		})
 	}
 }

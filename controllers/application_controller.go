@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Red Hat, Inc.
+Copyright 2021-2023 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,32 +19,43 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redhat-appstudio/application-service/pkg/metrics"
 
 	gofakeit "github.com/brianvoe/gofakeit/v6"
 	"github.com/go-logr/logr"
 
-	gh "github.com/google/go-github/v41/github"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 
-	appstudiov1alpha1 "github.com/redhat-appstudio/application-service/api/v1alpha1"
+	appstudiov1alpha1 "github.com/redhat-appstudio/application-api/api/v1alpha1"
 	devfile "github.com/redhat-appstudio/application-service/pkg/devfile"
 	github "github.com/redhat-appstudio/application-service/pkg/github"
+	logutil "github.com/redhat-appstudio/application-service/pkg/log"
+	util "github.com/redhat-appstudio/application-service/pkg/util"
 )
 
 // ApplicationReconciler reconciles a Application object
 type ApplicationReconciler struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	Log          logr.Logger
-	GitHubClient *gh.Client
-	GitHubOrg    string
+	Scheme            *runtime.Scheme
+	Log               logr.Logger
+	GitHubTokenClient github.GitHubToken
+	GitHubOrg         string
 }
+
+const applicationName = "Application"
 
 //+kubebuilder:rbac:groups=appstudio.redhat.com,resources=applications,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=appstudio.redhat.com,resources=applications/status,verbs=get;update;patch
@@ -60,7 +71,7 @@ type ApplicationReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("Application", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx)
 
 	// Get the Application resource
 	var application appstudiov1alpha1.Application
@@ -76,6 +87,15 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return reconcile.Result{}, err
 	}
 
+	ghClient, err := r.GitHubTokenClient.GetNewGitHubClient("")
+	if err != nil {
+		log.Error(err, "Unable to create Go-GitHub client due to error")
+		return reconcile.Result{}, err
+	}
+
+	// Add the Go-GitHub client name to the context
+	ctx = context.WithValue(ctx, github.GHClientKey, ghClient.TokenName)
+
 	// Check if the Application CR is under deletion
 	// If so: Remove the GitOps repo (if generated) and remove the finalizer.
 	if application.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -87,11 +107,11 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	} else {
 		if containsString(application.GetFinalizers(), appFinalizerName) {
 			// A finalizer is present for the Application CR, so make sure we do the necessary cleanup steps
-			if err := r.Finalize(&application); err != nil {
-				finalizeCount, err := getFinalizeCount(&application)
-				if err == nil && finalizeCount < 5 {
+			if err := r.Finalize(ctx, &application, ghClient); err != nil {
+				finalizeCounter, err := getCounterAnnotation(finalizeCount, &application)
+				if err == nil && finalizeCounter < 5 {
 					// The Finalize function failed, so increment the finalize count and return
-					setFinalizeCount(&application, finalizeCount+1)
+					setCounterAnnotation(finalizeCount, &application, finalizeCounter+1)
 					err := r.Update(ctx, &application)
 					if err != nil {
 						log.Error(err, "Error incrementing finalizer count on resource")
@@ -122,14 +142,19 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		appModelRepo := application.Spec.AppModelRepository.URL
 		if gitOpsRepo == "" {
 			// If both repositories are blank, just generate a single shared repository
-			repoName := github.GenerateNewRepositoryName(application.Spec.DisplayName, application.Namespace)
+			uniqueHash := util.GenerateUniqueHashForWorkloadImageTag(application.Namespace)
+			repoName := github.GenerateNewRepositoryName(application.Name, uniqueHash)
 
 			// Generate the git repo in the redhat-appstudio-appdata org
-			repoUrl, err := github.GenerateNewRepository(r.GitHubClient, ctx, r.GitHubOrg, repoName, "GitOps Repository")
+			// Not an SLI metric.  Used for determining the number of git operation requests
+			metricsLabel := prometheus.Labels{"controller": applicationName, "tokenName": ghClient.TokenName, "operation": "GenerateNewRepository"}
+			metrics.ControllerGitRequest.With(metricsLabel).Inc()
+			repoUrl, err := ghClient.GenerateNewRepository(ctx, r.GitHubOrg, repoName, "GitOps Repository")
 			if err != nil {
+				metrics.HandleRateLimitMetrics(err, metricsLabel)
 				log.Error(err, fmt.Sprintf("Unable to create repository %v", repoUrl))
-				r.SetCreateConditionAndUpdateCR(ctx, &application, err)
-				return reconcile.Result{}, nil
+				r.SetCreateConditionAndUpdateCR(ctx, req, &application, err)
+				return reconcile.Result{}, err
 			}
 
 			gitOpsRepo = repoUrl
@@ -143,29 +168,32 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		devfileData, err := devfile.ConvertApplicationToDevfile(application, gitOpsRepo, appModelRepo)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Unable to convert Application CR to devfile, exiting reconcile loop %v", req.NamespacedName))
-			r.SetCreateConditionAndUpdateCR(ctx, &application, err)
-			return reconcile.Result{}, nil
+			r.SetCreateConditionAndUpdateCR(ctx, req, &application, err)
+			return reconcile.Result{}, err
 		}
 		yamlData, err := yaml.Marshal(devfileData)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Unable to marshall Application devfile, exiting reconcile loop %v", req.NamespacedName))
-			r.SetCreateConditionAndUpdateCR(ctx, &application, err)
-			return reconcile.Result{}, nil
+			r.SetCreateConditionAndUpdateCR(ctx, req, &application, err)
+			return reconcile.Result{}, err
 		}
 
 		application.Status.Devfile = string(yamlData)
 
 		// Create GitOps repository
 		// Update the status of the CR
-		r.SetCreateConditionAndUpdateCR(ctx, &application, nil)
+		r.SetCreateConditionAndUpdateCR(ctx, req, &application, nil)
 	} else {
 		// If the model already exists, see if either the displayname or description need updating
 		// Get the devfile of the hasApp CR
-		devfileData, err := devfile.ParseDevfileModel(application.Status.Devfile)
+		devfileSrc := devfile.DevfileSrc{
+			Data: application.Status.Devfile,
+		}
+		devfileData, err := devfile.ParseDevfile(devfileSrc)
 		if err != nil {
-			r.SetUpdateConditionAndUpdateCR(ctx, &application, err)
+			r.SetUpdateConditionAndUpdateCR(ctx, req, &application, err)
 			log.Error(err, fmt.Sprintf("Unable to parse devfile model, exiting reconcile loop %v", req.NamespacedName))
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, err
 		}
 
 		// Update any specific fields that changed
@@ -188,12 +216,12 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			yamlData, err := yaml.Marshal(devfileData)
 			if err != nil {
 				log.Error(err, fmt.Sprintf("Unable to marshall Application devfile, exiting reconcile loop %v", req.NamespacedName))
-				r.SetUpdateConditionAndUpdateCR(ctx, &application, err)
-				return reconcile.Result{}, nil
+				r.SetUpdateConditionAndUpdateCR(ctx, req, &application, err)
+				return reconcile.Result{}, err
 			}
 
 			application.Status.Devfile = string(yamlData)
-			r.SetUpdateConditionAndUpdateCR(ctx, &application, nil)
+			r.SetUpdateConditionAndUpdateCR(ctx, req, &application, nil)
 		}
 	}
 
@@ -202,10 +230,31 @@ func (r *ApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ApplicationReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ApplicationReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	gofakeit.New(0)
+	log := ctrl.LoggerFrom(ctx).WithName("controllers").WithName("Application")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appstudiov1alpha1.Application{}).
+		WithOptions(controller.Options{
+			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(time.Duration(1*time.Second), time.Duration(1000*time.Second)),
+		}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				log := log.WithValues("namespace", e.Object.GetNamespace())
+				logutil.LogAPIResourceChangeEvent(log, e.Object.GetName(), "Application", logutil.ResourceCreate, nil)
+				return true
+			},
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				log := log.WithValues("namespace", e.ObjectNew.GetNamespace())
+				logutil.LogAPIResourceChangeEvent(log, e.ObjectNew.GetName(), "Application", logutil.ResourceUpdate, nil)
+				return true
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				log := log.WithValues("namespace", e.Object.GetNamespace())
+				logutil.LogAPIResourceChangeEvent(log, e.Object.GetName(), "Application", logutil.ResourceDelete, nil)
+				return false
+			},
+		}).
 		Complete(r)
 }

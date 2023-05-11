@@ -44,39 +44,44 @@ The image being pushed can again be modified using the environment variable:
 IMG=quay.io/user/hasoperator:next make docker-push
 ```
 
-## Deploying the Operator (non-KCP)
+## Deploying the Operator
 
-The following section outlines the steps to deploy HAS on a physical Kubernetes cluster. If you are looking to deploy HAS on KCP, please see [this document](./docs/kcp.md).
+The following section outlines the steps to deploy HAS on a physical Kubernetes cluster.
 
 ### Setting up the AppStudio Build Service environment
 
 * Install `OpenShift GitOps` from the in-cluster Operator Marketplace.
 * `oc -n openshift-gitops apply -f https://raw.githubusercontent.com/redhat-appstudio/infra-deployments/main/argo-cd-apps/base/build.yaml`
 
-As a user, upon creation of Component, Tekton resources would be created by the controller. 
+As a user, upon creation of Component, Tekton resources would be created by the controller.
 
-If you wish to get 'working' PipelineRuns,
-* Create an image pull secret named `redhat-appstudio-registry-pull-secret`. See [Kubernetes docs](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#registry-secret-existing-credentials) for more information on how to create
-`Secrets` containing registry credentials. 
-* Configure the default image repository to which Pipelines would push images to by defining the environment variable `IMAGE_REPOSITORY` for the operator deployment.
-Defaults to `quay.io/redhat-appstudio/user-workload`.
+To use auto generated image repository for the Component's image add `image.redhat.com/generate: "true"` annotation to the Component.
 
-Pipelines would use the credentials in the image pull secret `redhat-appstudio-registry-pull-secret` to push to $IMAGE_REPOSITORY.
+If you wish to get 'working' PipelineRuns with user provided image repository, create an image pull secret and link it to the `pipeline` Service Account in the Component's namespace (in both `secrets` and `imagePullSecrets` sections).
+See [Kubernetes docs](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#registry-secret-existing-credentials) for more information on how to create `Secrets` containing registry credentials.
 
 
 
 ### Creating a GitHub Secret for HAS
 
-Before deploying the operator, you must ensure that a secret, `has-github-token`, exists in the namespace where HAS will be deployed. This secret must contain a key-value pair, where the key is `token` and where the value points to a valid GitHub Personal Access Token.
+Before deploying the operator, you must ensure that a secret, `has-github-token`, exists in the namespace where HAS will be deployed. This secret must contain a key, `tokens`, whose value points to a comma separated list, without spaces, of key-value pairs of token names and tokens, delimited by a colon. 
 
-The token that is used here must have the following permissions set:
+For example, on OpenShift:
+
+<img width="801" alt="Screenshot 2023-03-22 at 3 53 11 PM" src="https://user-images.githubusercontent.com/6880023/227020767-30b3db08-e191-4ec1-81df-81ae2df55d79.png">
+
+Or via command-line:
+
+```bash
+application-service % kubectl create secret generic has-github-token --from-literal=tokens=token1:ghp_faketoken,token2:ghp_anothertoken,token3:ghp_thirdtoken
+```
+
+Any token that is used here must have the following permissions set:
 - `repo`
 - `delete_repo`
 
-In addition to this, the GitHub token must be associated with an account that has write access to the GitHub organization you plan on using with HAS (see next section).
+In addition to this, each GitHub token must be associated with an account that has write access to the GitHub organization you plan on using with HAS (see next section).
 
-For example, on OpenShift:
-<img width="862" alt="Screen Shot 2021-12-14 at 1 08 43 AM" src="https://user-images.githubusercontent.com/6880023/145942734-63422532-6fad-4017-9d26-79436fe241b8.png">
 
 ### Using Private Git Repos
 
@@ -113,6 +118,11 @@ For example:
 
 Webhooks require self-signed certificates to validate the resources. To disable webhooks during local dev and testing, export `ENABLE_WEBHOOKS=false`
 
-
-Useful links:
+### Useful links:
 * [HAS Project information page](https://docs.google.com/document/d/1axzNOhRBSkly3M2Y32Pxr1MBpBif2ljb-ufj0_aEt74/edit?usp=sharing)
+* Every Prow job executed by the CI system generates an artifacts directory containing information about that execution and its results. This [document](https://docs.ci.openshift.org/docs/how-tos/artifacts/) describes the contents of this directory and how they can be used to investigate the steps by the job.
+* For more information on the GitOps resource generation, please refer to the [gitops-generation](./docs/gitops-generation.md) documentation
+
+## Contributions
+
+Please see our [CONTRIBUTING](./docs/CONTRIBUTING.md) for more information.

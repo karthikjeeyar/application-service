@@ -1,5 +1,5 @@
 //
-// Copyright 2022 Red Hat, Inc.
+// Copyright 2022-2023 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	indexSchema "github.com/devfile/registry-support/index/generator/schema"
-	"github.com/redhat-developer/alizer/go/pkg/apis/recognizer"
+	"github.com/redhat-developer/alizer/go/pkg/apis/model"
 )
 
 func TestGetContext(t *testing.T) {
@@ -64,7 +64,7 @@ func TestGetContext(t *testing.T) {
 	}
 }
 
-func TestUpdateDockerfileLink(t *testing.T) {
+func TestUpdateGitLink(t *testing.T) {
 
 	tests := []struct {
 		name     string
@@ -96,7 +96,7 @@ func TestUpdateDockerfileLink(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			gotLink, err := UpdateDockerfileLink(tt.repo, "", tt.context)
+			gotLink, err := UpdateGitLink(tt.repo, "", tt.context)
 			if !tt.wantErr && err != nil {
 				t.Errorf("Unexpected err: %+v", err)
 			} else if tt.wantErr && err == nil {
@@ -186,13 +186,13 @@ func TestGetAlizerDevfileTypes(t *testing.T) {
 	tests := []struct {
 		name      string
 		url       string
-		wantTypes []recognizer.DevFileType
+		wantTypes []model.DevFileType
 		wantErr   bool
 	}{
 		{
 			name: "Get the Sample Devfile Types",
 			url:  "http://" + serverIP,
-			wantTypes: []recognizer.DevFileType{
+			wantTypes: []model.DevFileType{
 				{
 					Name:        "sampleindex1",
 					ProjectType: "project1",

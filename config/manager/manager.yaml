@@ -48,8 +48,8 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 200m
-            memory: 100Mi
+            cpu: 500m
+            memory: 400Mi
           requests:
             cpu: 100m
             memory: 20Mi
@@ -65,6 +65,18 @@ spec:
             secretKeyRef:
               name: has-github-token
               key: token
+              optional: true
+        - name: GITHUB_TOKEN_LIST
+          valueFrom:
+            secretKeyRef:
+              name: has-github-token
+              key: tokens
+              optional: true
+        - name: CDQ_GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: has-github-token
+              key: cdq-token
               optional: true
         - name: DEVFILE_REGISTRY_URL
           valueFrom:

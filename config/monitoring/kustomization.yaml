@@ -1,0 +1,12 @@
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+
+namespace: grafana-operator-system
+
+configMapGenerator:
+  - name: grafana-dashboard-has-gitops-repo-metrics
+    files:
+      - grafana-dashboards/has-gitops-repo-metrics.json
+  - name: grafana-dashboard-has-rate-limiting-metrics
+    files:
+      - grafana-dashboards/has-rate-limiting-metrics.json
